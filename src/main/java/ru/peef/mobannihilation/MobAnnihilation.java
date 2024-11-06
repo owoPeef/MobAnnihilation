@@ -7,6 +7,7 @@ import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.java.JavaPlugin;
 import ru.peef.mobannihilation.commands.GameCommand;
 import ru.peef.mobannihilation.commands.NPCCommand;
+import ru.peef.mobannihilation.game.AnvilGUI;
 import ru.peef.mobannihilation.game.GameManager;
 import ru.peef.mobannihilation.game.npcs.NPCDataHandler;
 import ru.peef.mobannihilation.game.players.GamePlayer;
@@ -25,6 +26,7 @@ public final class MobAnnihilation extends JavaPlugin {
         getCommand("game").setExecutor(new GameCommand());
         getCommand("npc").setExecutor(new NPCCommand());
         getServer().getPluginManager().registerEvents(new PlayerListener(), this);
+        getServer().getPluginManager().registerEvents(new AnvilGUI(), this);
 
         Bukkit.getScheduler().runTaskLater(this, () -> {
             for (World world : getServer().getWorlds()) {

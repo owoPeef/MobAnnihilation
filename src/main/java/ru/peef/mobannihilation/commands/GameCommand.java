@@ -6,6 +6,7 @@ import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
+import ru.peef.mobannihilation.game.AnvilGUI;
 import ru.peef.mobannihilation.game.items.RarityItem;
 import ru.peef.mobannihilation.game.players.GamePlayer;
 import ru.peef.mobannihilation.game.players.PlayerDataHandler;
@@ -37,30 +38,17 @@ public class GameCommand implements CommandExecutor {
                     case "leave":
                         gamePlayer.leaveArena();
                         break;
+                    case "combine":
+                        AnvilGUI.openAnvil(player);
+                        break;
                     case "item":
-                        gamePlayer.addItem(RarityItem.getRandom(gamePlayer));
+                        gamePlayer.addItem(RarityItem.getRandom(gamePlayer), true);
                         break;
                     case "stats":
                         player.sendMessage(gamePlayer.getStatsMessage());
                         break;
                 }
             } else if (args.length == 2) {
-                if (args[0].equals("clear")) {
-                    String playerNick = args[1];
-
-                    if (PlayerDataHandler.hasPlayer(playerNick)) {
-                        PlayerDataHandler.deletePlayer(playerNick);
-                        player.sendMessage(ChatColor.GREEN + "Весь прогресс игрока был очищен!");
-
-                        Player delPlayer = Bukkit.getPlayer(playerNick);
-                        if (delPlayer != null && delPlayer.isOnline()) {
-                            delPlayer.kickPlayer(ChatColor.RED + "Вас прогресс очищен! Перезайдите");
-                        }
-                    } else {
-                        player.sendMessage(ChatColor.RED + "Игрок не найден!");
-                    }
-                }
-
                 if (args[0].equals("add_progress") || args[0].equals("add_level") || args[0].equals("add_lvl")) {
                     try {
                         // ADD

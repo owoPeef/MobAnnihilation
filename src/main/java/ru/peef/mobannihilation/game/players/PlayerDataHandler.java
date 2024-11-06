@@ -49,23 +49,6 @@ public class PlayerDataHandler {
         }
     }
 
-    public static void deletePlayer(Player player) { deletePlayer(player.getName()); }
-    public static void deletePlayer(String name) {
-        try {
-            Map<String, PlayerData> playersData = loadPlayers();
-
-            if (playersData.remove(name) != null) {
-                try (FileWriter writer = new FileWriter(file)) {
-                    gson.toJson(playersData, writer);
-                }
-            } else {
-                MobAnnihilation.getInstance().getLogger().info(ChatColor.GOLD + name + ChatColor.RED + " >> игрок не найден в файле " + ChatColor.GRAY + "(удаление)");
-            }
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-    }
-
     public static boolean hasPlayer(Player player) { return hasPlayer(player.getName()); }
     public static boolean hasPlayer(String name) {
         Map<String, PlayerData> players = loadPlayers();

@@ -167,7 +167,7 @@ public class PlayerListener implements Listener {
                             RarityItem dropItem = RarityItem.getRandom(gDamager);
                             Random rand = new Random();
                             if (dropItem.getChance() <= RarityItem.getRandomPercent(0f, 100f) && rand.nextInt(3) == 1) {
-                                gDamager.addItem(dropItem);
+                                gDamager.addItem(dropItem, true);
                             }
 
                             damager.playSound(damager.getLocation(), Sound.ENTITY_EXPERIENCE_ORB_PICKUP, .5f, 1f);
@@ -292,12 +292,20 @@ public class PlayerListener implements Listener {
     }
 
     @EventHandler public void onPlayerItemHeld(PlayerItemHeldEvent event) { event.setCancelled(true); }
-    @EventHandler public void onInventoryMoveItem(InventoryMoveItemEvent event) { event.setCancelled(true); }
     @EventHandler public void onPlayerSwapHandItems(PlayerSwapHandItemsEvent event) { event.setCancelled(true); }
     @EventHandler public void onInventoryPickupItem(InventoryPickupItemEvent event) { event.setCancelled(true); }
 
+    @EventHandler
+    public void onInventoryClose(InventoryCloseEvent event) {
+        if (event.getInventory().getType().equals(InventoryType.ANVIL)) {
+            GamePlayer gamePlayer = PlayerManager.get((Player) event.getPlayer());
+            if (gamePlayer != null) gamePlayer.assignItems();
+        }
+    }
+
     @EventHandler public void onInventoryClick(InventoryClickEvent event) {
-        if (!event.getAction().equals(InventoryAction.DROP_ALL_SLOT) && !event.getAction().equals(InventoryAction.DROP_ONE_SLOT)) event.setCancelled(true);
+        if (!event.getClickedInventory().getType().equals(InventoryType.ANVIL) && !event.getAction().equals(InventoryAction.DROP_ALL_SLOT) && !event.getAction().equals(InventoryAction.DROP_ONE_SLOT))
+            event.setCancelled(true);
     }
     @EventHandler public void onFoodChange(FoodLevelChangeEvent event) { event.setCancelled(true); }
     @EventHandler public void onPlayerInteractEntity(PlayerInteractEntityEvent event) { if (event.getRightClicked().getType().equals(EntityType.VILLAGER)) event.setCancelled(true); }

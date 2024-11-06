@@ -60,7 +60,7 @@ public class GamePlayer {
         this.player = Bukkit.getPlayer(this.name);
         this.level = level;
 
-        items.forEach(this::addItem);
+        items.forEach(item -> addItem(item, false));
     }
 
     public String getName() { return player == null ? name : player.getName(); }
@@ -177,7 +177,7 @@ public class GamePlayer {
         }
     }
 
-    public void addItem(RarityItem item) {
+    public void addItem(RarityItem item, boolean chatAnnounce) {
         if (items.size() < maxItemsCount) {
             for (int i = 21; i < 26; i++) {
                 ItemStack slot = player.getInventory().getStorageContents()[i];
@@ -213,26 +213,50 @@ public class GamePlayer {
                 setPotions();
             }
 
-            TextComponent message = new TextComponent(ChatColor.AQUA + "Получен предмет: ");
-            TextComponent hoverMessage = new TextComponent(ChatColor.GOLD + "[" + item.getTitle() + "]");
+            if (chatAnnounce) {
+                TextComponent message = new TextComponent(ChatColor.AQUA + "Получен предмет: ");
+                TextComponent hoverMessage = new TextComponent(ChatColor.GOLD + "[" + item.getTitle() + "]");
 
-            hoverMessage.setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new ComponentBuilder(ChatColor.GOLD + item.getTitle() + "\n" +
-                    ChatColor.GREEN + "Редкость: " + item.getRarityString() + ChatColor.GRAY + " (" + item.boostPercent + (item.boostIsPercent ? "%" : "") + ")" + "\n" +
-                    ChatColor.AQUA + item.getDescription()
-            ).create()));
-            message.addExtra(hoverMessage);
-            player.spigot().sendMessage(message);
+                hoverMessage.setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new ComponentBuilder(ChatColor.GOLD + item.getTitle() + "\n" +
+                        ChatColor.GREEN + "Редкость: " + item.getRarityString() + ChatColor.GRAY + " (" + item.boostPercent + (item.boostIsPercent ? "%" : "") + ")" + "\n" +
+                        ChatColor.AQUA + item.getDescription()
+                ).create()));
+                message.addExtra(hoverMessage);
+                player.spigot().sendMessage(message);
+            }
         } else {
-            player.sendMessage(ChatColor.RED + "Инвентарь заполнен!");
+            player.spigot().sendMessage(ChatMessageType.ACTION_BAR, new TextComponent(ChatColor.RED + "Инвентарь заполнен!"));
         }
     }
 
-    public float getRarityPercent(RarityItem.Boost type) {
-        float value = 0;
-        for (RarityItem protectionItem : getRarityItems(type)) {
-            value += protectionItem.boostPercent;
+    public void assignItems() {
+        player.getInventory().clear();
+
+        for (int i = 21; i < 26; i++) {
+            if (items.containsKey(i)) {
+                RarityItem item = items.get(i);
+                player.getInventory().remove(i);
+
+                ItemStack itemStack = new ItemStack(Material.EMERALD, 1);
+                ItemMeta itemMeta = itemStack.getItemMeta();
+                if (itemMeta != null) {
+                    List<String> lore = new ArrayList<>();
+                    itemMeta.setDisplayName(ChatColor.RESET + (ChatColor.GOLD + item.getTitle()));
+
+                    lore.add(ChatColor.GREEN + "Редкость: " + item.getRarityString() + ChatColor.GRAY + " (" + item.boostPercent + (item.boostIsPercent ? "%" : "") + ")");
+                    if (item.getChance() != 0) lore.add(ChatColor.GREEN + "Шанс выпадения: " + ChatColor.GOLD + Utils.roundTo(item.getChance(), 2) + "%");
+                    lore.add(ChatColor.GRAY + item.getDescription());
+
+                    itemMeta.setLore(lore);
+                }
+
+                itemStack.setItemMeta(itemMeta);
+                player.getInventory().setItem(i, itemStack);
+                item.setItemStack(itemStack);
+            }
         }
-        return value;
+
+        setSword();
     }
 
     public void removeItem(Integer slot) {
@@ -249,6 +273,13 @@ public class GamePlayer {
         return rarityItems;
     }
 
+    public float getRarityPercent(RarityItem.Boost type) {
+        float value = 0;
+        for (RarityItem protectionItem : getRarityItems(type)) {
+            value += protectionItem.boostPercent;
+        }
+        return value;
+    }
     public void spawnMobs() {
         for (int i = 0; i < 3; i++) {
             spawnMob();
