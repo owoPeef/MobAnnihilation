@@ -52,10 +52,12 @@ public class RarityItem {
         this.chance = 100 * (1 - (boostPercent - minBoostPercent) / (maxBoostPercent - minBoostPercent));
     }
 
-    public String getTitle() { return String.format(title, getBoostName(true, 2)); }
+    public String getTitle() { return title.replace("{BOOST_NAME}", getBoostName(true, 2)); }
 
     public String getDescription() {
-        return String.format(description, getBoostPercent() + (this.boostIsPercent ? "%" : ""), getBoostName(true, 1));
+        return description
+                .replace("{BOOST_PERCENT}", getBoostPercent() + (this.boostIsPercent ? "%" : ""))
+                .replace("{BOOST_NAME}", getBoostName(true, 1));
     }
 
     public float getChance() { return this.chance; }
@@ -141,7 +143,7 @@ public class RarityItem {
     public static RarityItem getRandom(GamePlayer gamePlayer) {
         Random rand = new Random();
         int randInt = rand.nextInt(5);
-        return new RarityItem("Руна %s", "Когда находится в инвентаре, дает +%s к %s", gamePlayer.getLevel() / 1.8f, (randInt == 4 ? Boost.PROTECTION : randInt == 3 ? Boost.SPEED : randInt == 2 ? Boost.ATTACK_SPEED : Boost.DAMAGE));
+        return new RarityItem("Руна {BOOST_NAME}", "Когда находится в инвентаре, дает +{BOOST_PERCENT} к {BOOST_NAME}", gamePlayer.getLevel() / 1.8f, (randInt == 4 ? Boost.PROTECTION : randInt == 3 ? Boost.SPEED : randInt == 2 ? Boost.ATTACK_SPEED : Boost.DAMAGE));
     }
 
     public static CraftRarityItem combineItems(RarityItem... items) {

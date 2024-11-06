@@ -1,6 +1,7 @@
 package ru.peef.mobannihilation.game.players;
 
 import com.google.gson.*;
+import com.google.gson.reflect.TypeToken;
 import org.bukkit.ChatColor;
 import org.bukkit.entity.Player;
 import ru.peef.mobannihilation.MobAnnihilation;
@@ -11,7 +12,9 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.lang.reflect.Type;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 public class PlayerDataHandler {
@@ -33,33 +36,23 @@ public class PlayerDataHandler {
         }
     }
 
-    public static void savePlayer(Player player, double level) {
-        try {
-            Map<String, Double> playersData = loadAllPlayers();
-            playersData.put(player.getName(), level);
+    public static void savePlayer(GamePlayer player) {
+        try (FileWriter writer = new FileWriter(file)) {
+            Map<String, PlayerData> playersData = loadPlayers();
+            if (playersData == null) playersData = new HashMap<>();
+            PlayerData data = PlayerData.create(player);
+            playersData.put(player.getName(), data);
 
-            try (FileWriter writer = new FileWriter(file)) {
-                gson.toJson(playersData, writer);
-            }
+            gson.toJson(playersData, writer);
         } catch (IOException e) {
             e.printStackTrace();
-        }
-    }
-
-    public static Double loadPlayer(Player player) { return loadPlayer(player.getName()); }
-    public static Double loadPlayer(String name) {
-        try {
-            Map<String, Double> playersData = loadAllPlayers();
-            return playersData.getOrDefault(name, 1.0);
-        } catch (Exception e) {
-            return 1.0;
         }
     }
 
     public static void deletePlayer(Player player) { deletePlayer(player.getName()); }
     public static void deletePlayer(String name) {
         try {
-            Map<String, Double> playersData = loadAllPlayers();
+            Map<String, PlayerData> playersData = loadPlayers();
 
             if (playersData.remove(name) != null) {
                 try (FileWriter writer = new FileWriter(file)) {
@@ -75,33 +68,23 @@ public class PlayerDataHandler {
 
     public static boolean hasPlayer(Player player) { return hasPlayer(player.getName()); }
     public static boolean hasPlayer(String name) {
-        try {
-            Map<String, Double> playersData = loadAllPlayers();
-
-            return playersData.containsKey(name);
-        } catch (IOException e) {
-            return false;
-        }
+        Map<String, PlayerData> players = loadPlayers();
+        return players != null && players.containsKey(name);
     }
 
-    private static Map<String, GamePlayer> loadAllPlayers() throws IOException {
-        if (!file.exists()) {
-            file.createNewFile();
-            return new HashMap<>();
-        }
-
+    public static Map<String, PlayerData> loadPlayers() {
         try (FileReader reader = new FileReader(file)) {
-            JsonElement element = new JsonParser().parse(reader);
-            if (element.isJsonObject()) {
-                Map<String, GamePlayer> playersData = new HashMap<>();
-                JsonObject jsonObject = element.getAsJsonObject();
-
-                for (Map.Entry<String, JsonElement> entry : jsonObject.entrySet()) {
-                    playersData.put(entry.getKey(), entry.getValue());
-                }
-                return playersData;
-            }
-            return new HashMap<>();
+            Type type = new TypeToken<Map<String, PlayerData>>() {}.getType();
+            return gson.fromJson(reader, type);
+        } catch (IOException e) {
+            e.printStackTrace();
         }
+        return new HashMap<>();
+    }
+
+    public static PlayerData getPlayerData(String name) {
+        Map<String, PlayerData> playersData = loadPlayers();
+
+        return playersData != null ? playersData.get(name) : null;
     }
 }

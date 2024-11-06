@@ -31,7 +31,7 @@ import java.util.List;
 public class GamePlayer {
     private final Player player;
     private final String name;
-    private double level;
+    public double level;
     private final HashMap<Integer, RarityItem> items = new HashMap<>();
     public boolean onArena = false;
     public String lastProg = "";
@@ -59,6 +59,8 @@ public class GamePlayer {
         this.name = name;
         this.player = Bukkit.getPlayer(this.name);
         this.level = level;
+
+        items.forEach(this::addItem);
     }
 
     public String getName() { return player == null ? name : player.getName(); }
@@ -78,7 +80,7 @@ public class GamePlayer {
                 + ChatColor.GREEN + "===============\n";
     }
 
-    public void save() { PlayerDataHandler.savePlayer(player, getLevel()); }
+    public void save() { PlayerDataHandler.savePlayer(this); }
     public void addLevel(int level) { addProgress(level * 100); }
     public void addProgress(double prog) {
         int lvl = getLevel();
@@ -133,10 +135,10 @@ public class GamePlayer {
     }
 
     public void joinServer() {
-        player.removePotionEffect(PotionEffectType.SPEED);
         updateProgress();
         PlayerManager.PLAYERS.add(this);
 
+        setPotions();
         ScoreboardUtils.updateScoreboard(this);
     }
 
@@ -187,7 +189,7 @@ public class GamePlayer {
                         itemMeta.setDisplayName(ChatColor.RESET + (ChatColor.GOLD + item.getTitle()));
 
                         lore.add(ChatColor.GREEN + "Редкость: " + item.getRarityString() + ChatColor.GRAY + " (" + item.boostPercent + (item.boostIsPercent ? "%" : "") + ")");
-                        lore.add(ChatColor.GREEN + "Шанс выпадения: " + ChatColor.GOLD + Utils.roundTo(item.getChance(), 2) + "%");
+                        if (item.getChance() != 0) lore.add(ChatColor.GREEN + "Шанс выпадения: " + ChatColor.GOLD + Utils.roundTo(item.getChance(), 2) + "%");
                         lore.add(ChatColor.GRAY + item.getDescription());
 
                         itemMeta.setLore(lore);
@@ -240,6 +242,7 @@ public class GamePlayer {
     }
 
     public HashMap<Integer, RarityItem> getRarityItems() { return items; }
+    public List<RarityItem> getAllRarityItems() { return new ArrayList<>(items.values()); }
     public List<RarityItem> getRarityItems(RarityItem.Boost boostType) {
         List<RarityItem> rarityItems = new ArrayList<>();
         items.forEach((slot, item) -> { if (item.boost.equals(boostType)) rarityItems.add(item); });
@@ -257,6 +260,11 @@ public class GamePlayer {
         new GameMob(entity, this);
     }
 
-    public static GamePlayer fromFile(String name) { return new GamePlayer(name, PlayerDataHandler.loadPlayer(name)); }
-    public static GamePlayer fromFile(Player player) { return new GamePlayer(player, PlayerDataHandler.loadPlayer(player)); }
+    public static GamePlayer fromFile(String name) {
+        PlayerData playerData = PlayerDataHandler.getPlayerData(name);
+
+        if (playerData != null) return new GamePlayer(name, playerData.level, playerData.rarity_items);
+        else return new GamePlayer(name, 1.0);
+    }
+    public static GamePlayer fromFile(Player player) { return fromFile(player.getName()); }
 }
