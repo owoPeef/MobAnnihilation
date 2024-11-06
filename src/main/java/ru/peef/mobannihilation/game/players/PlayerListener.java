@@ -26,9 +26,6 @@ import java.util.Map;
 import java.util.Random;
 
 public class PlayerListener implements Listener {
-    // TODO: при смене хотбара отменять событие
-    // TODO: фиксануть невозможность выкидывать предметы
-    // TODO: фикс бага при смерти
     @EventHandler
     public void onPlayerJoin(PlayerJoinEvent event) {
         event.setJoinMessage("");
@@ -195,7 +192,6 @@ public class PlayerListener implements Listener {
     public void onEntityDamage(EntityDamageEvent event) {
         if (event.getEntityType().equals(EntityType.PLAYER)) {
             EntityDamageEvent.DamageCause cause = event.getCause();
-            // TODO
             if (cause.equals(EntityDamageEvent.DamageCause.FALL) || cause.equals(EntityDamageEvent.DamageCause.FIRE)) {
                 event.setCancelled(true);
             } else {
