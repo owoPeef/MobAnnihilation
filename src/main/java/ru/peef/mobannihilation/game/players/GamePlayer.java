@@ -33,15 +33,14 @@ import java.util.UUID;
 public class GamePlayer {
     private final Player player;
     private final String name;
-    public double level = 1.0;
+    public double level;
     public List<GameMob> mobs = new ArrayList<>();
     private final HashMap<Integer, RarityItem> items = new HashMap<>();
     public boolean onArena = false;
     public String lastProg = "";
     public boolean editMode = false;
 
-    // TODO: Брать из конфига
-    public int maxItemsCount = 5;
+    public int maxItemsCount;
 
     // TODO: Ребитхи
 
@@ -57,6 +56,8 @@ public class GamePlayer {
         this.name = name;
         this.player = Bukkit.getPlayer(this.name);
         this.level = level;
+
+        updateProgress();
     }
 
     public GamePlayer(String name, Double level, List<RarityItem> items) {
@@ -65,6 +66,7 @@ public class GamePlayer {
         this.level = level;
 
         items.forEach(item -> addItem(item, false));
+        updateProgress();
     }
 
     public String getName() { return player == null ? name : player.getName(); }
@@ -189,6 +191,7 @@ public class GamePlayer {
     }
 
     public void addItem(RarityItem item, boolean chatAnnounce) {
+        maxItemsCount = MobAnnihilation.getConfiguration().getInt("options.players_rarity_items_count");
         if (items.size() < maxItemsCount) {
             for (int i = 20; i < 26; i++) {
                 ItemStack slot = player.getInventory().getStorageContents()[i];

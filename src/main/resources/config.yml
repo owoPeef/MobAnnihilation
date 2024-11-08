@@ -1,6 +1,7 @@
 options:
   scoreboard_update_seconds: 15
   players_top_count: 5
+  players_rarity_items_count: 5
   resource_pack_url: ""
   chat:
     gamePlayer_format: "&b[%mobannihilation_level%✫] &6%s &a>> %s"
