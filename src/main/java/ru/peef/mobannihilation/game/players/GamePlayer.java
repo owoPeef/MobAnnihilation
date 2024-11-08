@@ -41,7 +41,7 @@ public class GamePlayer {
     public boolean editMode = false;
 
     // TODO: Брать из конфига
-    public int maxItemsCount = 3;
+    public int maxItemsCount = 5;
 
     // TODO: Ребитхи
 
@@ -155,13 +155,6 @@ public class GamePlayer {
             player.sendMessage(ChatColor.GREEN + "Вы были телепортированы на арену!");
             player.sendMessage(ChatColor.YELLOW + (ChatColor.BOLD + "ПОМНИТЕ!") + ChatColor.AQUA + " Для выхода из арены: " + ChatColor.GOLD + "/game leave");
 
-            for (Player p : GameManager.ARENA_WORLD.getPlayers()) {
-                if (GameManager.hideOnArena) {
-                    player.hidePlayer(MobAnnihilation.getInstance(), p);
-                    p.hidePlayer(MobAnnihilation.getInstance(), player);
-                }
-            }
-
             GameManager.PLAYERS_ON_ARENA.add(this);
 
             arena = new Arena(GameManager.ARENA_WORLD,
@@ -185,6 +178,9 @@ public class GamePlayer {
             GameManager.PLAYERS_ON_ARENA.removeIf(checkPlayer -> checkPlayer.getName().equals(player.getName()));
             onArena = false;
 
+            setPotions();
+            updateProgress();
+
             arena.unload();
             arena = null;
         } else if (sendMessages) {
@@ -194,7 +190,7 @@ public class GamePlayer {
 
     public void addItem(RarityItem item, boolean chatAnnounce) {
         if (items.size() < maxItemsCount) {
-            for (int i = 21; i < 26; i++) {
+            for (int i = 20; i < 26; i++) {
                 ItemStack slot = player.getInventory().getStorageContents()[i];
                 if (slot == null) {
                     ItemStack itemStack = new ItemStack(Material.EMERALD, 1);
@@ -216,7 +212,6 @@ public class GamePlayer {
                     items.put(i, item);
 
                     if (item.rarity == 5) {
-                        // TODO show text on hover
                         Bukkit.broadcastMessage(ChatColor.GOLD + getName() + ChatColor.AQUA + " выбил " + ChatColor.RED + "ЛЕГЕНДАРНУЮ" + ChatColor.AQUA + " руну!");
                     }
 
@@ -297,7 +292,10 @@ public class GamePlayer {
     }
     public void spawnMobs() {
         for (int i = 0; i < 3; i++) {
-            spawnMob(EntityType.ZOMBIE);
+            EntityType entityType = EntityType.ZOMBIE;
+            double chance = 1 + Math.random() * (10 - 1);
+            if (chance <= 1.2) entityType = EntityType.PIG_ZOMBIE;
+            spawnMob(entityType);
         }
     }
 

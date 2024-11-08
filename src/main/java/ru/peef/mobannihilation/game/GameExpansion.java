@@ -5,6 +5,7 @@ import org.bukkit.ChatColor;
 import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;
 import ru.peef.mobannihilation.game.players.PlayerData;
+import ru.peef.mobannihilation.game.players.PlayerDataHandler;
 
 import java.util.Map;
 
@@ -33,14 +34,24 @@ public class GameExpansion extends PlaceholderExpansion {
                 topNum--;
                 Map<String, PlayerData> topPlayers = GameManager.getTopByLevel();
 
-                int i = 0;
-                for (Map.Entry<String, PlayerData> playerData : topPlayers.entrySet()) {
-                    if (i == topNum) return ChatColor.GOLD + (playerData.getKey() + " - ") + ChatColor.AQUA + (playerData.getValue().getLevel() + " ур.");;
-                    i++;
+                if (!topPlayers.isEmpty()) {
+                    int i = 0;
+                    for (Map.Entry<String, PlayerData> playerData : topPlayers.entrySet()) {
+                        if (playerData.getKey() != null && playerData.getValue() != null && i == topNum) return ChatColor.GOLD + (playerData.getKey() + " - ") + ChatColor.AQUA + (playerData.getValue().getLevel() + " ур.");;
+                        i++;
+                    }
                 }
 
                 return ChatColor.YELLOW + " - ";
-            } catch (NumberFormatException ignored) {}
+            } catch (NullPointerException | NumberFormatException ignored) {
+                return ChatColor.YELLOW + " - ";
+            }
+        }
+        if (params.equalsIgnoreCase("level")) {
+            PlayerData data = PlayerDataHandler.getPlayerData(player);
+            if (data != null) {
+                return String.valueOf(data.getLevel());
+            }
         }
         return null;
     }

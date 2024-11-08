@@ -51,7 +51,7 @@ public class RarityItem {
 
         if (boost.equals(Boost.SPEED)) boostPercent++;
 
-        this.chance = 100 * (1 - (boostPercent - minBoostPercent) / (maxBoostPercent - minBoostPercent));
+        this.chance = Math.abs(100 * (1 - (boostPercent - minBoostPercent) / (maxBoostPercent - minBoostPercent)));
     }
 
     public String getTitle() { return title.replace("{BOOST_NAME}", getBoostName(true, 2)); }

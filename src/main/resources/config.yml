@@ -1,0 +1,22 @@
+options:
+  scoreboard_update_seconds: 15
+  players_top_count: 5
+  resource_pack_url: ""
+  chat:
+    gamePlayer_format: "&b[%mobannihilation_level%✫] &6%s &a>> %s"
+    player_format: "&6%s &a>> %s"
+  game_process:
+    death_min_reduce_progress: 9
+    death_max_reduce_progress: 27
+    damage_scaling_factor: 1.03
+worlds:
+  lobby:
+    world_name: "lobby"
+    spawnX: 0.5
+    spawnY: 20.0
+    spawnZ: 0.5
+  arena:
+    world_name: "arena"
+    spawnX: 0.5
+    spawnY: 18.0
+    spawnZ: 0.5

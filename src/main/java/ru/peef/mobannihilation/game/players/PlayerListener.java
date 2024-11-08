@@ -1,10 +1,12 @@
 package ru.peef.mobannihilation.game.players;
 
+import me.clip.placeholderapi.PlaceholderAPI;
 import net.md_5.bungee.api.ChatMessageType;
 import net.md_5.bungee.api.chat.TextComponent;
 import org.bukkit.*;
 import org.bukkit.entity.*;
 import org.bukkit.event.EventHandler;
+import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.entity.*;
 import org.bukkit.event.inventory.*;
@@ -23,7 +25,6 @@ import ru.peef.mobannihilation.game.npcs.NPCManager;
 
 import java.util.List;
 import java.util.Map;
-import java.util.Random;
 
 public class PlayerListener implements Listener {
     @EventHandler
@@ -37,7 +38,8 @@ public class PlayerListener implements Listener {
         player.setHealth(player.getMaxHealth());
         player.getInventory().clear();
 
-        player.setResourcePack("https://download.mc-packs.net/pack/3d3949e03b080798e87fee534f17e4a39869bbf5.zip");
+        String textures_url = MobAnnihilation.getConfiguration().getString("options.resource_pack_url");
+        if (!textures_url.isEmpty()) player.setResourcePack(textures_url);
 
         // Когда игрок только зашел, у него появляются все доступные команды
         if (!PlayerDataHandler.hasPlayer(player)) {
@@ -149,8 +151,6 @@ public class PlayerListener implements Listener {
                             result -= 100;
 
                             double total = Math.abs(itemBaseDamage + damage) + (damagePercent * result);
-//                            damager.sendMessage(String.format("%sБазовый урон: %s (+%s)\n%sИтоговый урон: %s", ChatColor.AQUA, Utils.roundTo(damage, 1), Utils.roundTo(result, 1) + "%", ChatColor.YELLOW, Utils.roundTo(total, 1)));
-
                             event.setDamage(total);
                         }
 
@@ -161,8 +161,7 @@ public class PlayerListener implements Listener {
                             damager.addPotionEffect(new PotionEffect(PotionEffectType.REGENERATION, 20, 5), true);
 
                             RarityItem dropItem = RarityItem.getRandom(gDamager);
-                            Random rand = new Random();
-                            if (dropItem.getChance() <= RarityItem.getRandomPercent(0f, 100f) && rand.nextInt(3) == 1) {
+                            if (dropItem.getChance() <= RarityItem.getRandomPercent(0f, 100f)) {
                                 gDamager.addItem(dropItem, true);
                             }
 
@@ -183,22 +182,21 @@ public class PlayerListener implements Listener {
         }
     }
 
-    @EventHandler
+    @EventHandler(priority = EventPriority.HIGHEST)
     public void onEntityDamage(EntityDamageEvent event) {
         if (event.getEntityType().equals(EntityType.PLAYER)) {
             EntityDamageEvent.DamageCause cause = event.getCause();
-            if (cause.equals(EntityDamageEvent.DamageCause.FALL) || cause.equals(EntityDamageEvent.DamageCause.FIRE)) {
+            if (cause.equals(EntityDamageEvent.DamageCause.FALL)) {
                 event.setCancelled(true);
             } else {
                 GamePlayer gamePlayer = PlayerManager.get((Player) event.getEntity());
 
                 if (gamePlayer != null) {
-                    double scalingFactor = 1.03;
-                    double linearFactor = 0.1;
+                    double scalingFactor = MobAnnihilation.getConfiguration().getDouble("options.mobs.damage_scaling_factor");
 
                     int playerLevel = gamePlayer.getLevel();
-                    double baseDamage = event.getFinalDamage();
-                    double damage = baseDamage * Math.pow(scalingFactor, playerLevel) + baseDamage * linearFactor * playerLevel;
+                    double baseDamage = event.getDamage();
+                    double damage = Utils.roundTo(baseDamage * Math.pow(scalingFactor, playerLevel) + baseDamage * 0.1 * playerLevel, 2);
 
                     if (!gamePlayer.getRarityItems(RarityItem.Boost.PROTECTION).isEmpty()) {
                         double damagePercent = damage / 100f;
@@ -225,9 +223,9 @@ public class PlayerListener implements Listener {
         GamePlayer gamePlayer = PlayerManager.get(player);
 
         if (gamePlayer != null) {
-            event.setFormat(ChatColor.AQUA + "[" + gamePlayer.getLevel() + "✫] " + ChatColor.GOLD + "%s " + ChatColor.GREEN + ">> %s");
+            event.setFormat(PlaceholderAPI.setPlaceholders(player, MobAnnihilation.getConfiguration().getString("options.chat.gamePlayer_format")).replace('&', ChatColor.COLOR_CHAR));
         } else {
-            event.setFormat(ChatColor.GOLD + "%s " + ChatColor.GREEN + ">> %s");
+            event.setFormat(PlaceholderAPI.setPlaceholders(player, MobAnnihilation.getConfiguration().getString("options.chat.player_format")).replace('&', ChatColor.COLOR_CHAR));
         }
     }
 
@@ -252,7 +250,10 @@ public class PlayerListener implements Listener {
                 player.teleport(GameManager.BASIC_SPAWN);
                 player.setGameMode(GameMode.ADVENTURE);
 
-                int progress = (int) Math.round(9 + Math.random() * (27 - 9));
+                int minProgressReduce = MobAnnihilation.getConfiguration().getInt("options.game_process.death_min_reduce_progress");
+                int maxProgressReduce = MobAnnihilation.getConfiguration().getInt("options.game_process.death_max_reduce_progress");
+
+                int progress = (int) Math.round(minProgressReduce + Math.random() * (maxProgressReduce - minProgressReduce));
                 gamePlayer.reduceProgress(progress);
                 gamePlayer.leaveArena(false);
 
@@ -331,8 +332,10 @@ public class PlayerListener implements Listener {
         if (gamePlayer != null && gamePlayer.editMode) {
             event.setCancelled(false);
         } else {
-            if (!event.getClickedInventory().getType().equals(InventoryType.ANVIL) && !event.getAction().equals(InventoryAction.DROP_ALL_SLOT) && !event.getAction().equals(InventoryAction.DROP_ONE_SLOT))
-                event.setCancelled(true);
+            if (event.getClickedInventory() != null && event.getAction() != null
+                    && !event.getClickedInventory().getType().equals(InventoryType.ANVIL) && !event.getAction().equals(InventoryAction.DROP_ALL_SLOT)
+                    && !event.getAction().equals(InventoryAction.DROP_ONE_SLOT)
+            ) event.setCancelled(true);
         }
     }
     @EventHandler public void onFoodChange(FoodLevelChangeEvent event) { event.setCancelled(true); }

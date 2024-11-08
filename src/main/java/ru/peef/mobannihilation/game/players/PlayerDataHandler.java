@@ -66,6 +66,7 @@ public class PlayerDataHandler {
         return new HashMap<>();
     }
 
+    public static PlayerData getPlayerData(Player player) { return getPlayerData(player.getName()); }
     public static PlayerData getPlayerData(String name) {
         Map<String, PlayerData> playersData = loadPlayers();
 

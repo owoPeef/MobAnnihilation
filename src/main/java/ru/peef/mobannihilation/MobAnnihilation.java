@@ -1,8 +1,11 @@
 package ru.peef.mobannihilation;
 
+import java.io.File;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.World;
+import org.bukkit.configuration.file.FileConfiguration;
+import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.entity.Entity;
 import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.java.JavaPlugin;
@@ -23,8 +26,13 @@ import ru.peef.mobannihilation.holograms.Hologram;
 
 public final class MobAnnihilation extends JavaPlugin {
 
+    public static File configFile;
+    public static FileConfiguration config;
+
     @Override
     public void onEnable() {
+        createConfig();
+
         GameManager.init();
 
         getCommand("game").setExecutor(new GameCommand());
@@ -39,6 +47,7 @@ public final class MobAnnihilation extends JavaPlugin {
         } else {
             new GameExpansion().register();
         }
+
 
         Bukkit.getScheduler().runTaskLater(this, () -> {
             for (World world : getServer().getWorlds()) {
@@ -68,5 +77,17 @@ public final class MobAnnihilation extends JavaPlugin {
         GameManager.ARENA_WORLD.getEntities().forEach(Entity::remove);
     }
 
+    private void createConfig() {
+        configFile = new File(getDataFolder(), "config.yml");
+
+        if (!configFile.exists()) {
+            getDataFolder().mkdirs();
+            saveResource("config.yml", false);
+        }
+
+        config = YamlConfiguration.loadConfiguration(configFile);
+    }
+
+    public static FileConfiguration getConfiguration() { return config; }
     public static Plugin getInstance() { return getProvidingPlugin(MobAnnihilation.class); }
 }
