@@ -11,7 +11,6 @@ import ru.peef.mobannihilation.game.players.PlayerManager;
 import java.util.*;
 
 public class GameManager {
-    // TODO: Все это получать из конфига
     public static World BASIC_WORLD, ARENA_WORLD;
     public static Location BASIC_SPAWN, ARENA_SPAWN;
     public static int SHOW_TOP_PLAYERS_COUNT;
