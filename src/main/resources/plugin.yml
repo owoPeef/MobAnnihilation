@@ -2,12 +2,15 @@ name: MobAnnihilation
 version: '${version}'
 main: ru.peef.mobannihilation.MobAnnihilation
 authors: [owoPeef]
+depend: [PlaceholderAPI, WorldEdit]
 commands:
   npc:
     description: Команда для управления NPC
     permission: "game.npc"
   game:
     description: Команда для взаимодействия с игрой
+  world:
+    description: Select world
 permissions:
   game.add:
     default: op

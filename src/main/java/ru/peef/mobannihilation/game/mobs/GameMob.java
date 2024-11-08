@@ -19,7 +19,7 @@ public class GameMob {
         this.entity = entity;
         this.livingEntity = (LivingEntity) entity;
 
-        uniqueId = entity.getUniqueId();
+        uniqueId = livingEntity.getUniqueId();
 
         this.spawnedFor = spawnedFor;
 
@@ -28,8 +28,6 @@ public class GameMob {
             livingEntity.setMaxHealth(Math.min(mobHealth, 2048.0));
             livingEntity.setHealth(Math.min(mobHealth, 2048.0));
         }
-
-        GameManager.SPAWNED_MOBS.add(this);
     }
 
     public GameMob(Entity entity, Player spawnedFor) {
@@ -45,7 +43,11 @@ public class GameMob {
             livingEntity.setMaxHealth(Math.min(mobHealth, 2048.0));
             livingEntity.setHealth(Math.min(mobHealth, 2048.0));
         }
+    }
 
-        GameManager.SPAWNED_MOBS.add(this);
+    public static GameMob createAndAppend(Entity entity, GamePlayer gamePlayer) {
+        GameMob mob = new GameMob(entity, gamePlayer);
+        gamePlayer.mobs.add(mob);
+        return mob;
     }
 }

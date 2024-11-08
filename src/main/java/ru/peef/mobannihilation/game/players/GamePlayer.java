@@ -20,6 +20,7 @@ import org.bukkit.potion.PotionEffectType;
 import ru.peef.mobannihilation.MobAnnihilation;
 import ru.peef.mobannihilation.ScoreboardUtils;
 import ru.peef.mobannihilation.Utils;
+import ru.peef.mobannihilation.game.Arena;
 import ru.peef.mobannihilation.game.GameManager;
 import ru.peef.mobannihilation.game.items.RarityItem;
 import ru.peef.mobannihilation.game.mobs.GameMob;
@@ -27,14 +28,17 @@ import ru.peef.mobannihilation.game.mobs.GameMob;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.UUID;
 
 public class GamePlayer {
     private final Player player;
     private final String name;
-    public double level;
+    public double level = 1.0;
+    public List<GameMob> mobs = new ArrayList<>();
     private final HashMap<Integer, RarityItem> items = new HashMap<>();
     public boolean onArena = false;
     public String lastProg = "";
+    public boolean editMode = false;
 
     // TODO: Брать из конфига
     public int maxItemsCount = 3;
@@ -76,7 +80,7 @@ public class GamePlayer {
                 + ChatColor.AQUA + "Рун Урона: " + ChatColor.YELLOW + getRarityItems(RarityItem.Boost.DAMAGE).size() + " (" + Utils.roundTo(getRarityPercent(RarityItem.Boost.DAMAGE), 1) + "%)" + "\n"
                 + ChatColor.AQUA + "Рун Защиты: " + ChatColor.YELLOW + getRarityItems(RarityItem.Boost.PROTECTION).size() + " (" + Utils.roundTo(getRarityPercent(RarityItem.Boost.PROTECTION), 1) + "%)" + "\n"
                 + ChatColor.AQUA + "Рун Скорости: " + ChatColor.YELLOW + getRarityItems(RarityItem.Boost.SPEED).size() + " (" + Utils.roundTo(getRarityPercent(RarityItem.Boost.SPEED), 1) + ")" + "\n"
-                + ChatColor.AQUA + "Рун Скорости Атаки: " + ChatColor.YELLOW + getRarityItems(RarityItem.Boost.ATTACK_SPEED).size() + " (" + Utils.roundTo(getRarityPercent(RarityItem.Boost.ATTACK_SPEED), 1) + ")" + "\n"
+//                + ChatColor.AQUA + "Рун Скорости Атаки: " + ChatColor.YELLOW + getRarityItems(RarityItem.Boost.ATTACK_SPEED).size() + " (" + Utils.roundTo(getRarityPercent(RarityItem.Boost.ATTACK_SPEED), 1) + ")" + "\n"
                 + ChatColor.GREEN + "===============\n";
     }
 
@@ -130,27 +134,26 @@ public class GamePlayer {
     public void setPotions() {
         player.removePotionEffect(PotionEffectType.SPEED);
         if (!getRarityItems(RarityItem.Boost.SPEED).isEmpty()) {
-            player.addPotionEffect(new PotionEffect(PotionEffectType.SPEED, Integer.MAX_VALUE, (int) getRarityPercent(RarityItem.Boost.SPEED), false));
+            player.addPotionEffect(new PotionEffect(PotionEffectType.SPEED, Integer.MAX_VALUE, ((int) getRarityPercent(RarityItem.Boost.SPEED))-1, false));
         }
     }
 
     public void joinServer() {
         updateProgress();
         PlayerManager.PLAYERS.add(this);
+        getPlayer().getInventory().setHeldItemSlot(0);
 
         setPotions();
         ScoreboardUtils.updateScoreboard(this);
     }
 
-    public void leaveServer() {
-
-    }
+    Arena arena = null;
 
     public void joinArena() {
         if (!onArena) {
             onArena = true;
-            player.teleport(GameManager.ARENA_SPAWN);
             player.sendMessage(ChatColor.GREEN + "Вы были телепортированы на арену!");
+            player.sendMessage(ChatColor.YELLOW + (ChatColor.BOLD + "ПОМНИТЕ!") + ChatColor.AQUA + " Для выхода из арены: " + ChatColor.GOLD + "/game leave");
 
             for (Player p : GameManager.ARENA_WORLD.getPlayers()) {
                 if (GameManager.hideOnArena) {
@@ -159,20 +162,32 @@ public class GamePlayer {
                 }
             }
 
-            spawnMob();
             GameManager.PLAYERS_ON_ARENA.add(this);
+
+            arena = new Arena(GameManager.ARENA_WORLD,
+                    "mainArena",
+                    5, 18, 40,
+                    21, 7, 40
+            );
+            arena.add(this);
+            arena.load(0, 25, 50);
+
+            spawnMob(EntityType.ZOMBIE);
         } else {
             player.sendMessage(ChatColor.RED + "Ты уже на арене!");
         }
     }
 
-    public void leaveArena() {
+    public void leaveArena(boolean sendMessages) {
         if (onArena) {
             player.teleport(GameManager.BASIC_SPAWN);
-            player.sendMessage(ChatColor.AQUA + "Вы вышли с арены!");
+            if (sendMessages) player.sendMessage(ChatColor.AQUA + "Вы вышли с арены!");
             GameManager.PLAYERS_ON_ARENA.removeIf(checkPlayer -> checkPlayer.getName().equals(player.getName()));
             onArena = false;
-        } else {
+
+            arena.unload();
+            arena = null;
+        } else if (sendMessages) {
             player.sendMessage(ChatColor.RED + "Ты не находишься на арене!");
         }
     }
@@ -282,19 +297,44 @@ public class GamePlayer {
     }
     public void spawnMobs() {
         for (int i = 0; i < 3; i++) {
-            spawnMob();
+            spawnMob(EntityType.ZOMBIE);
         }
     }
 
-    public void spawnMob() {
-        Entity entity = GameManager.ARENA_WORLD.spawnEntity(GameManager.MOB_SPAWN, EntityType.ZOMBIE);
-        new GameMob(entity, this);
+    public void spawnMob(EntityType type) {
+        Entity entity = GameManager.ARENA_WORLD.spawnEntity(arena.getMobSpawn(), type);
+        GameMob mob = GameMob.createAndAppend(entity, this);
+        MobAnnihilation.getInstance().getLogger().info(String.format("Spawned mob for %s at %s %s %s", mob.spawnedFor.getName(), entity.getLocation().getX(), entity.getLocation().getY(), entity.getLocation().getZ()));
+    }
+
+    public GameMob getMob(UUID uniqueId) {
+        for (GameMob mob : mobs) {
+            if (mob.uniqueId.equals(uniqueId)) return mob;
+        }
+        return null;
+    }
+
+    public boolean hasAliveMobs() {
+        for (GameMob mob : mobs) {
+//            player.sendMessage(ChatColor.GOLD + (mob.uniqueId + (ChatColor.AQUA + " is dead: ") + mob.livingEntity.isDead()));
+            if (mob.livingEntity != null && !mob.livingEntity.isDead()) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    public boolean hasMob(UUID uniqueId) {
+        for (GameMob mob : mobs) {
+            if (mob.livingEntity != null && !mob.livingEntity.isDead() && mob.uniqueId.equals(uniqueId)) return true;
+        }
+        return false;
     }
 
     public static GamePlayer fromFile(String name) {
         PlayerData playerData = PlayerDataHandler.getPlayerData(name);
 
-        if (playerData != null) return new GamePlayer(name, playerData.level, playerData.rarity_items);
+        if (playerData != null) return new GamePlayer(name, Math.max(1.0, playerData.level), playerData.rarity_items);
         else return new GamePlayer(name, 1.0);
     }
     public static GamePlayer fromFile(Player player) { return fromFile(player.getName()); }

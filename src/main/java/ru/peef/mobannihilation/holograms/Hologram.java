@@ -1,10 +1,12 @@
 package ru.peef.mobannihilation.holograms;
 
+import me.clip.placeholderapi.PlaceholderAPI;
 import org.bukkit.ChatColor;
 import org.bukkit.Location;
 import org.bukkit.World;
 import org.bukkit.entity.ArmorStand;
 import org.bukkit.entity.EntityType;
+import ru.peef.mobannihilation.MobAnnihilation;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -24,7 +26,7 @@ public class Hologram {
     private final String name;
     public Hologram(String name, World world, double x, double y, double z, String text) {
         this.name = name;
-        Location location = new Location(world, x,  y + 1.77f, z);
+        Location location = new Location(world, x,  y, z);
         armorStand = (ArmorStand) world.spawnEntity(location, EntityType.ARMOR_STAND);
 
         setText(text);
@@ -34,12 +36,15 @@ public class Hologram {
         armorStand.setMarker(true);
         armorStand.setVisible(false);
 
+        MobAnnihilation.getInstance().getLogger().info(String.format("Spawned Hologram at %s %s %s (%s)", x, y, z, name));
+
         HOLOGRAMS.add(this);
     }
 
     public void setText(String text) {
         if (armorStand != null && !text.isEmpty()) {
-            armorStand.setCustomName(text.replace('&', ChatColor.COLOR_CHAR).trim());
+            String holoText = PlaceholderAPI.setPlaceholders(null, text.replace('&', ChatColor.COLOR_CHAR).trim());
+            armorStand.setCustomName(holoText);
             armorStand.setCustomNameVisible(true);
         }
     }

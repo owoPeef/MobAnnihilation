@@ -67,10 +67,9 @@ public class PlayerListener implements Listener {
         if (gamePlayer != null) {
             gamePlayer.save();
 
-            for (GameMob mob : GameManager.getSpawnedMobs()) {
+            for (GameMob mob : gamePlayer.mobs) {
                 if (mob != null && mob.livingEntity != null && !mob.livingEntity.isDead() && mob.spawnedFor.getName().equals(gamePlayer.getName())) {
                     mob.livingEntity.remove();
-                    GameManager.SPAWNED_MOBS.remove(mob);
                 }
             }
 
@@ -169,17 +168,13 @@ public class PlayerListener implements Listener {
 
                             damager.playSound(damager.getLocation(), Sound.ENTITY_EXPERIENCE_ORB_PICKUP, .5f, 1f);
 
-                            GameMob killedMob = GameManager.getByUniqueId(entity.getUniqueId());
-                            boolean hasAlive = false;
-                            for (GameMob mob : GameManager.getSpawnedMobs()) {
-                                if (mob != null && mob.livingEntity != null && !mob.livingEntity.isDead() && !killedMob.livingEntity.equals(mob.livingEntity)) {
-                                    hasAlive = true;
-                                    break;
+                            GameMob killedMob = gDamager.getMob(entity.getUniqueId());
+//                            Bukkit.getLogger().info("Killed mob (" + killedMob.uniqueId + ") by " + damager.getName() + " is null: " + (killedMob.equals(null)));
+                            if (killedMob != null) {
+                                gDamager.mobs.removeIf(mob -> mob.uniqueId.equals(killedMob.uniqueId));
+                                if (!gDamager.hasAliveMobs()) {
+                                    Bukkit.getScheduler().runTaskLater(MobAnnihilation.getInstance(), gDamager::spawnMobs, 10L);
                                 }
-                            }
-
-                            if (!hasAlive) {
-                                Bukkit.getScheduler().runTaskLater(MobAnnihilation.getInstance(), gDamager::spawnMobs, 10L);
                             }
                         }
                     }
@@ -198,7 +193,12 @@ public class PlayerListener implements Listener {
                 GamePlayer gamePlayer = PlayerManager.get((Player) event.getEntity());
 
                 if (gamePlayer != null) {
-                    double damage = event.getFinalDamage() * (gamePlayer.getLevel() / 5f);
+                    double scalingFactor = 1.03;
+                    double linearFactor = 0.1;
+
+                    int playerLevel = gamePlayer.getLevel();
+                    double baseDamage = event.getFinalDamage();
+                    double damage = baseDamage * Math.pow(scalingFactor, playerLevel) + baseDamage * linearFactor * playerLevel;
 
                     if (!gamePlayer.getRarityItems(RarityItem.Boost.PROTECTION).isEmpty()) {
                         double damagePercent = damage / 100f;
@@ -210,11 +210,10 @@ public class PlayerListener implements Listener {
                         result -= 100;
                         result /= (gamePlayer.getLevel() / 3.3f);
 
-                        double total = damage - (damagePercent * result);
-                        event.setDamage(total);
-                    } else {
-                        event.setDamage(damage);
+                        damage -= (damagePercent * result);
                     }
+
+                    event.setDamage(damage);
                 }
             }
         }
@@ -239,12 +238,11 @@ public class PlayerListener implements Listener {
         GamePlayer gamePlayer = PlayerManager.get(player);
 
         if (gamePlayer != null) {
-            for (GameMob mob : GameManager.getSpawnedMobs()) {
-                if (mob != null && mob.livingEntity != null && !mob.livingEntity.isDead() && mob.spawnedFor.getName().equals(gamePlayer.getName())) {
+            gamePlayer.mobs.forEach(mob -> {
+                if (mob != null && mob.livingEntity != null) {
                     mob.livingEntity.remove();
-                    GameManager.SPAWNED_MOBS.remove(mob);
                 }
-            }
+            });
 
             BukkitScheduler scheduler = Bukkit.getScheduler();
 
@@ -256,11 +254,9 @@ public class PlayerListener implements Listener {
 
                 int progress = (int) Math.round(9 + Math.random() * (27 - 9));
                 gamePlayer.reduceProgress(progress);
-                gamePlayer.onArena = false;
-                player.sendMessage(String.format(ChatColor.RED + "Вы умерли! Из-за этого вы потеряли: %s%s", ChatColor.GOLD, progress + " опыта"));
+                gamePlayer.leaveArena(false);
 
-                gamePlayer.setPotions();
-                GameManager.PLAYERS_ON_ARENA.remove(gamePlayer);
+                player.sendMessage(String.format(ChatColor.RED + "Вы умерли! Из-за этого вы потеряли: %s%s", ChatColor.GOLD, progress + " опыта"));
             }, 1L);
         }
     }
@@ -281,15 +277,44 @@ public class PlayerListener implements Listener {
     @EventHandler
     public void onEntityTarget(EntityTargetEvent event) {
         Entity entity = event.getEntity();
-        GameMob mob = GameManager.getByUniqueId(entity.getUniqueId());
-        if (mob != null) {
-            event.setTarget(mob.spawnedFor.getPlayer());
-        }
+
+        GameManager.PLAYERS_ON_ARENA.forEach(gamePlayer -> {
+            if (gamePlayer.hasMob(entity.getUniqueId())) {
+                event.setTarget(gamePlayer.getPlayer());
+            }
+        });
     }
 
-    @EventHandler public void onPlayerItemHeld(PlayerItemHeldEvent event) { event.setCancelled(true); }
-    @EventHandler public void onPlayerSwapHandItems(PlayerSwapHandItemsEvent event) { event.setCancelled(true); }
-    @EventHandler public void onInventoryPickupItem(InventoryPickupItemEvent event) { event.setCancelled(true); }
+    @EventHandler public void onPlayerItemHeld(PlayerItemHeldEvent event) {
+        Player player = event.getPlayer();
+        GamePlayer gamePlayer = PlayerManager.get(player);
+
+        if (gamePlayer != null) {
+            event.setCancelled(!gamePlayer.editMode);
+        } else {
+            event.setCancelled(true);
+        }
+    }
+    @EventHandler public void onPlayerSwapHandItems(PlayerSwapHandItemsEvent event) {
+        Player player = event.getPlayer();
+        GamePlayer gamePlayer = PlayerManager.get(player);
+
+        if (gamePlayer != null) {
+            event.setCancelled(!gamePlayer.editMode);
+        } else {
+            event.setCancelled(true);
+        }
+    }
+    @EventHandler public void onInventoryPickupItem(InventoryPickupItemEvent event) {
+        Player player = (Player) event.getInventory().getViewers().get(0);
+        GamePlayer gamePlayer = PlayerManager.get(player);
+
+        if (gamePlayer != null) {
+            event.setCancelled(!gamePlayer.editMode);
+        } else {
+            event.setCancelled(true);
+        }
+    }
 
     @EventHandler
     public void onInventoryClose(InventoryCloseEvent event) {
@@ -300,8 +325,15 @@ public class PlayerListener implements Listener {
     }
 
     @EventHandler public void onInventoryClick(InventoryClickEvent event) {
-        if (!event.getClickedInventory().getType().equals(InventoryType.ANVIL) && !event.getAction().equals(InventoryAction.DROP_ALL_SLOT) && !event.getAction().equals(InventoryAction.DROP_ONE_SLOT))
-            event.setCancelled(true);
+        Player player = (Player) event.getWhoClicked();
+        GamePlayer gamePlayer = PlayerManager.get(player);
+
+        if (gamePlayer != null && gamePlayer.editMode) {
+            event.setCancelled(false);
+        } else {
+            if (!event.getClickedInventory().getType().equals(InventoryType.ANVIL) && !event.getAction().equals(InventoryAction.DROP_ALL_SLOT) && !event.getAction().equals(InventoryAction.DROP_ONE_SLOT))
+                event.setCancelled(true);
+        }
     }
     @EventHandler public void onFoodChange(FoodLevelChangeEvent event) { event.setCancelled(true); }
     @EventHandler public void onPlayerInteractEntity(PlayerInteractEntityEvent event) { if (event.getRightClicked().getType().equals(EntityType.VILLAGER)) event.setCancelled(true); }

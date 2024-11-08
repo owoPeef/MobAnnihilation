@@ -5,19 +5,18 @@ import ru.peef.mobannihilation.MobAnnihilation;
 import ru.peef.mobannihilation.ScoreboardUtils;
 import ru.peef.mobannihilation.game.mobs.GameMob;
 import ru.peef.mobannihilation.game.players.GamePlayer;
+import ru.peef.mobannihilation.game.players.PlayerData;
+import ru.peef.mobannihilation.game.players.PlayerDataHandler;
 import ru.peef.mobannihilation.game.players.PlayerManager;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.UUID;
-import java.util.concurrent.atomic.AtomicReference;
+import java.util.*;
 
 public class GameManager {
     // TODO: Все это получать из конфига
     public static World BASIC_WORLD, ARENA_WORLD;
     public static Location BASIC_SPAWN, ARENA_SPAWN;
     public static Location MOB_SPAWN;
-    public static List<GameMob> SPAWNED_MOBS = new ArrayList<>();
+    public static int SHOW_TOP_PLAYERS_COUNT = 5;
     public static boolean hideOnArena = false;
     public static int scoreboardUpdateSeconds = 15;
 
@@ -37,19 +36,15 @@ public class GameManager {
         Bukkit.getScheduler().runTaskTimer(MobAnnihilation.getInstance(), () -> PlayerManager.PLAYERS.forEach(ScoreboardUtils::updateScoreboard), 0, scoreboardUpdateSeconds * 20L);
     }
 
-    public static List<GameMob> getSpawnedMobs() {
-        List<GameMob> mobs = new ArrayList<>();
+    public static Map<String, PlayerData> getTopByLevel() {
+        Map<String, PlayerData> players = PlayerDataHandler.loadPlayers();
+        List<Map.Entry<String, PlayerData>> entries = new ArrayList<>(players.entrySet());
+        entries.sort((entry1, entry2) -> Double.compare(entry2.getValue().level, entry1.getValue().level));
+        Map<String, PlayerData> sortedPlayers = new LinkedHashMap<>();
+        for (Map.Entry<String, PlayerData> entry : entries) {
+            sortedPlayers.put(entry.getKey(), entry.getValue());
+        }
 
-        SPAWNED_MOBS.forEach(mob -> {
-            if (mob != null) mobs.add(mob);
-        });
-
-        return mobs;
-    }
-
-    public static GameMob getByUniqueId(UUID uniqueId) {
-        AtomicReference<GameMob> mob = new AtomicReference<>();
-        SPAWNED_MOBS.forEach(gameMob -> { if (gameMob.uniqueId.equals(uniqueId)) mob.set(gameMob); });
-        return mob.get();
+        return sortedPlayers;
     }
 }

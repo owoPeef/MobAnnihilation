@@ -49,6 +49,8 @@ public class RarityItem {
         float maxBoostPercent = !this.boostIsPercent ? 3 : this.baseValue * (this.boost == Boost.PROTECTION ? 1.37f : 1.1f);
         this.boostPercent = (float) Math.floor(getRandomPercent(minBoostPercent, maxBoostPercent));
 
+        if (boost.equals(Boost.SPEED)) boostPercent++;
+
         this.chance = 100 * (1 - (boostPercent - minBoostPercent) / (maxBoostPercent - minBoostPercent));
     }
 
@@ -56,7 +58,7 @@ public class RarityItem {
 
     public String getDescription() {
         return description
-                .replace("{BOOST_PERCENT}", getBoostPercent() + (this.boostIsPercent ? "%" : ""))
+                .replace("{BOOST_PERCENT}", boostPercent + (this.boostIsPercent ? "%" : ""))
                 .replace("{BOOST_NAME}", getBoostName(true, 1));
     }
 
@@ -114,11 +116,6 @@ public class RarityItem {
         return "???";
     }
 
-    public float getBoostPercent() {
-        if (boost == Boost.SPEED) return boostPercent + 1;
-        else return boostPercent;
-    }
-
     public String getRarityString() {
         if (rarity == 5) {
             return ChatColor.RED + "ЛЕГЕНДАРНАЯ";
@@ -142,8 +139,12 @@ public class RarityItem {
 
     public static RarityItem getRandom(GamePlayer gamePlayer) {
         Random rand = new Random();
-        int randInt = rand.nextInt(5);
-        return new RarityItem("Руна {BOOST_NAME}", "Когда находится в инвентаре, дает +{BOOST_PERCENT} к {BOOST_NAME}", gamePlayer.getLevel() / 1.8f, (randInt == 4 ? Boost.PROTECTION : randInt == 3 ? Boost.SPEED : randInt == 2 ? Boost.ATTACK_SPEED : Boost.DAMAGE));
+
+        int includeBoostsCount = 4;
+        int randInt = rand.nextInt(includeBoostsCount);
+        Boost boost = (randInt == 3 ? Boost.SPEED : randInt == 2 ? Boost.PROTECTION : Boost.DAMAGE);
+
+        return new RarityItem("Руна {BOOST_NAME}", "Когда находится в инвентаре, дает +{BOOST_PERCENT} к {BOOST_NAME}", gamePlayer.getLevel() / 1.8f, boost);
     }
 
     public static CraftRarityItem combineItems(RarityItem... items) {

@@ -36,7 +36,7 @@ public class GameCommand implements CommandExecutor {
                         gamePlayer.joinArena();
                         break;
                     case "leave":
-                        gamePlayer.leaveArena();
+                        gamePlayer.leaveArena(true);
                         break;
                     case "combine":
                         AnvilGUI.openAnvil(player);
@@ -47,6 +47,9 @@ public class GameCommand implements CommandExecutor {
                     case "stats":
                         player.sendMessage(gamePlayer.getStatsMessage());
                         break;
+                    case "edit":
+                        gamePlayer.editMode = !gamePlayer.editMode;
+                        player.sendMessage(ChatColor.AQUA + "Режим редактирования: " + (gamePlayer.editMode ? ChatColor.GREEN + "вкл" : ChatColor.RED + "выкл"));
                 }
             } else if (args.length == 2) {
                 if (args[0].equals("add_progress") || args[0].equals("add_level") || args[0].equals("add_lvl")) {

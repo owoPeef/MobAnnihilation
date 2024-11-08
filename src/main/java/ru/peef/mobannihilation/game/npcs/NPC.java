@@ -44,7 +44,7 @@ public class NPC {
         ((Villager) entity).setAI(false);
         uniqueId = entity.getUniqueId();
 
-        hologram = new Hologram(this.name, world, x, y, z, hologramText);
+        hologram = new Hologram(this.name, world, x, y+1.77f, z, hologramText);
     }
     public void despawn() {
         entity.remove();

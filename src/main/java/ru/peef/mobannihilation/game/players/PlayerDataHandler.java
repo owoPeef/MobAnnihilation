@@ -2,7 +2,6 @@ package ru.peef.mobannihilation.game.players;
 
 import com.google.gson.*;
 import com.google.gson.reflect.TypeToken;
-import org.bukkit.ChatColor;
 import org.bukkit.entity.Player;
 import ru.peef.mobannihilation.MobAnnihilation;
 import ru.peef.mobannihilation.game.items.RarityItem;
@@ -14,7 +13,6 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.lang.reflect.Type;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 public class PlayerDataHandler {
@@ -37,13 +35,16 @@ public class PlayerDataHandler {
     }
 
     public static void savePlayer(GamePlayer player) {
-        try (FileWriter writer = new FileWriter(file)) {
+        try {
             Map<String, PlayerData> playersData = loadPlayers();
             if (playersData == null) playersData = new HashMap<>();
+
             PlayerData data = PlayerData.create(player);
             playersData.put(player.getName(), data);
 
-            gson.toJson(playersData, writer);
+            try (FileWriter writer = new FileWriter(file, false)) {  // false для перезаписи файла
+                gson.toJson(playersData, writer);
+            }
         } catch (IOException e) {
             e.printStackTrace();
         }

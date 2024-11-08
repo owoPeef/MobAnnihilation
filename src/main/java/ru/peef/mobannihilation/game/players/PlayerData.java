@@ -13,6 +13,8 @@ public class PlayerData {
         this.rarity_items = rarity_items;
     }
 
+    public int getLevel() { return (int) Math.floor(level); }
+
     public static PlayerData create(GamePlayer gamePlayer) {
         return new PlayerData(gamePlayer.level, gamePlayer.getAllRarityItems());
     }
