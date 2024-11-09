@@ -55,6 +55,11 @@ public class Arena {
         arenaPlayers.addAll(Arrays.asList(players));
     }
 
+    public Location getPlayerSpawn() {
+        int spawnZ = this.spawnZ + Math.max(arenaOffset, arenaIndex * arenaOffset);
+        return new Location(world, spawnX+.5f, spawnY, spawnZ+.5f, -90, 0);
+    }
+
     public Location getMobSpawn() {
         int mobSpawnZ = this.mobSpawnZ + Math.max(arenaOffset, arenaIndex * arenaOffset);
         return new Location(world, mobSpawnX+.5f, mobSpawnY, mobSpawnZ+.5f);
@@ -99,7 +104,10 @@ public class Arena {
         }
     }
 
+    // TODO: отгрузку арен
     public void unload() {
-        editSession.undo(editSession);
+        if (editSession != null) {
+            editSession.undo(editSession);
+        }
     }
 }

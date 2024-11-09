@@ -333,8 +333,11 @@ public class PlayerListener implements Listener {
             event.setCancelled(false);
         } else {
             if (event.getClickedInventory() != null && event.getAction() != null
-                    && !event.getClickedInventory().getType().equals(InventoryType.ANVIL) && !event.getAction().equals(InventoryAction.DROP_ALL_SLOT)
+                    && !event.getClickedInventory().getType().equals(InventoryType.ANVIL)
+                    && !event.getAction().equals(InventoryAction.DROP_ALL_SLOT)
                     && !event.getAction().equals(InventoryAction.DROP_ONE_SLOT)
+                    && !event.getAction().equals(InventoryAction.DROP_ALL_CURSOR)
+                    && !event.getAction().equals(InventoryAction.DROP_ONE_CURSOR)
             ) event.setCancelled(true);
         }
     }

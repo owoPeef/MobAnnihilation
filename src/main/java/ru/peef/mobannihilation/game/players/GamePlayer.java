@@ -4,10 +4,7 @@ import net.md_5.bungee.api.ChatMessageType;
 import net.md_5.bungee.api.chat.ComponentBuilder;
 import net.md_5.bungee.api.chat.HoverEvent;
 import net.md_5.bungee.api.chat.TextComponent;
-import org.bukkit.Bukkit;
-import org.bukkit.ChatColor;
-import org.bukkit.Material;
-import org.bukkit.Sound;
+import org.bukkit.*;
 import org.bukkit.enchantments.Enchantment;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.EntityType;
@@ -166,6 +163,7 @@ public class GamePlayer {
             );
             arena.add(this);
             arena.load(0, 25, 50);
+            player.teleport(arena.getPlayerSpawn());
 
             spawnMob(EntityType.ZOMBIE);
         } else {
