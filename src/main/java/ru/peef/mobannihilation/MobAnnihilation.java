@@ -49,9 +49,17 @@ public final class MobAnnihilation extends JavaPlugin {
         }
 
 
-        Bukkit.getScheduler().runTaskLater(this, () -> {
-            for (World world : getServer().getWorlds()) {
-                world.getEntities().forEach(Entity::remove);
+        Bukkit.getScheduler().runTask(MobAnnihilation.getInstance(), () -> {
+            if (GameManager.BASIC_WORLD != null) {
+                GameManager.BASIC_WORLD.getEntities().stream()
+                        .filter(Entity::isValid)
+                        .forEach(Entity::remove);
+            }
+
+            if (GameManager.ARENA_WORLD != null) {
+                GameManager.ARENA_WORLD.getEntities().stream()
+                        .filter(Entity::isValid)
+                        .forEach(Entity::remove);
             }
 
             PlayerDataHandler.init();
@@ -63,18 +71,13 @@ public final class MobAnnihilation extends JavaPlugin {
             for (int i = 0; i < GameManager.SHOW_TOP_PLAYERS_COUNT; i++) {
                 new Hologram("top" + (i+1), GameManager.BASIC_WORLD, 5.5, 20 - (i * 0.3), 0.5, "%mobannihilation_top" + (i+1) + "%");
             }
-        }, 5L);
+        });
     }
 
     @Override
     public void onDisable() {
         PlayerManager.PLAYERS.forEach(GamePlayer::save);
         NPCManager.CHARACTERS.forEach(NPC::despawn);
-
-        GameManager.BASIC_WORLD.getEntities().forEach(Entity::remove);
-        GameManager.BASIC_WORLD.getEntities().forEach(Entity::remove);
-        GameManager.ARENA_WORLD.getEntities().forEach(Entity::remove);
-        GameManager.ARENA_WORLD.getEntities().forEach(Entity::remove);
     }
 
     private void createConfig() {

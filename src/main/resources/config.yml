@@ -3,6 +3,7 @@ options:
   players_top_count: 5
   players_rarity_items_count: 5
   resource_pack_url: "https://download.mc-packs.net/pack/5cd071892b9ec3895aba3a3b12bef868300c53c5.zip"
+  worldedit_schematic_path: "plugins\\WorldEdit\\schematics\\"
   chat:
     gamePlayer_format: "&b[%mobannihilation_level%✫] &6%s &a>> %s"
     player_format: "&6%s &a>> %s"

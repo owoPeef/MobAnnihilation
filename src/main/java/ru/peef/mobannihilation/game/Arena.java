@@ -32,13 +32,12 @@ public class Arena {
     public List<GamePlayer> arenaPlayers = new ArrayList<>();
     EditSession editSession;
     int arenaIndex;
-
     int arenaOffset = 50;
 
     public Arena(World world, String name, int spawnX, int spawnY, int spawnZ, int mobSpawnX, int mobSpawnY, int mobSpawnZ) {
         this.world = world;
         this.arenaName = name;
-        file = new File(WorldEditPlugin.getPlugin(WorldEditPlugin.class).getDataFolder() + "\\schematics\\" + arenaName + ".schematic");
+        file = new File(WorldEditPlugin.getPlugin(WorldEditPlugin.class).getDataFolder() + File.separator + "schematics" + File.separator + arenaName + ".schematic");
 
         arenaIndex = GameManager.PLAYERS_ON_ARENA.size()+1;
 
@@ -67,7 +66,7 @@ public class Arena {
 
     public void load(int x, int y, int z) {
         if (!file.exists()) {
-            MobAnnihilation.getInstance().getLogger().info("File (" + file.getName() + ") not found!");
+            MobAnnihilation.getInstance().getLogger().info("File (" + file.getAbsolutePath() + ") not found!");
             return;
         }
 
