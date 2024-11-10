@@ -1,7 +1,7 @@
 name: MobAnnihilation
 version: '${version}'
 main: ru.peef.mobannihilation.MobAnnihilation
-authors: [owoPeef]
+authors: [HimBanny, owoPeef]
 depend: [PlaceholderAPI, WorldEdit]
 commands:
   npc:
